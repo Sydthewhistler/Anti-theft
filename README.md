@@ -1,16 +1,15 @@
-# 📌 Cahier des charges  
-## 🎒 Projet : Antivol connecté LoRa
+## Projet : Antivol connecté LoRa
 
 ---
 
-## 1. 🎯 Objectif du projet
+## 1. Objectif du projet
 
 Réaliser un système antivol connecté permettant de surveiller un objet (sac, valise, vélo, etc.).  
 Le système doit être capable de détecter un mouvement anormal et de déclencher une alerte locale ainsi qu’une transmission d’information à distance via une communication radio (LoRa 868 MHz).
 
 ---
 
-## 2. ❓ Problématique
+## 2. Problématique
 
 Comment concevoir un système autonome capable de :
 - détecter le déplacement d’un objet
@@ -19,7 +18,7 @@ Comment concevoir un système autonome capable de :
 
 ---
 
-## 3. ⚙️ Fonctionnalités attendues
+## 3. Fonctionnalités attendues
 
 ### Fonction principale
 - Détection de mouvement à l’aide d’un accéléromètre
@@ -34,7 +33,7 @@ Comment concevoir un système autonome capable de :
 
 ---
 
-## 4. 🧠 Principe de fonctionnement
+## 4. Principe de fonctionnement
 
 1. L’utilisateur active le système
 2. Le système enregistre un état de référence (immobile)
@@ -46,7 +45,7 @@ Comment concevoir un système autonome capable de :
 
 ---
 
-## 5. 🧰 Matériel utilisé
+## 5. Matériel utilisé
 
 - Carte microcontrôleur (UCA)
 - Accéléromètre (KXTJ3)
@@ -61,7 +60,7 @@ Comment concevoir un système autonome capable de :
 
 ---
 
-## 6. 🔌 Contraintes techniques
+## 6. Contraintes techniques
 
 - Utilisation obligatoire d’une communication radio LoRa 868 MHz
 - Système embarqué autonome
@@ -71,7 +70,7 @@ Comment concevoir un système autonome capable de :
 
 ---
 
-## 7. 🗂️ Organisation du projet
+## 7. Organisation du projet
 
 ### Étapes de réalisation
 
@@ -85,7 +84,7 @@ Comment concevoir un système autonome capable de :
 
 ---
 
-## 8. 📡 Architecture du système
+## 8. Architecture du système
 
 - Entrée : accéléromètre
 - Traitement : microcontrôleur
@@ -95,7 +94,7 @@ Comment concevoir un système autonome capable de :
 
 ---
 
-## 9. 🧪 Critères de validation
+## 9. Critères de validation
 
 - Détection correcte d’un mouvement réel
 - Absence de faux déclenchements excessifs
@@ -105,7 +104,7 @@ Comment concevoir un système autonome capable de :
 
 ---
 
-## 10. 📊 Livrables attendus
+## 10. Livrables attendus
 
 - Code source (GitHub)
 - Schémas du montage
@@ -114,7 +113,7 @@ Comment concevoir un système autonome capable de :
 
 ---
 
-## 11. 🚀 Perspectives d’évolution
+## 11. Perspectives d’évolution
 
 - Ajout d’un système de géolocalisation
 - Application mobile de réception
