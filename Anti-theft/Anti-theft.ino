@@ -3,6 +3,8 @@
  * Basé sur le code de Fabien Ferrero (Aug, 2021)
  ******************************************************************************/
 
+#define DEBUG  // commenter pour désactiver tous les Serial
+
 #include <lmic.h>
 #include <hal/hal.h>
 #include <SPI.h>
@@ -58,8 +60,6 @@ KXTJ3   myIMU(0x0E);
 // ─────────────────────────────────────────────
 //  PARAMÈTRES DE DÉTECTION
 // ─────────────────────────────────────────────
-// Valeurs brutes int16 — 1g ≈ 1024 unités en LOW_POWER
-// SEUIL_DIFF = 1.5g → 1.5 * 1024 = 1536 (distance Manhattan |X|+|Y|+|Z|)
 #define SEUIL_DIFF      1536
 #define INCREMENT_BASE  3
 #define INCREMENT_MAX   15
@@ -96,7 +96,12 @@ bool          blinkState        = false;
 //  LORA — ÉVÉNEMENTS
 // ─────────────────────────────────────────────
 void onEvent(ev_t ev) {
-  if (ev == EV_TXCOMPLETE) loraTxDone = true;
+  if (ev == EV_TXCOMPLETE) {
+    #ifdef DEBUG
+    Serial.println(F("LoRa: TX complete"));
+    #endif
+    loraTxDone = true;
+  }
 }
 
 // ─────────────────────────────────────────────
@@ -112,7 +117,12 @@ void resetDetection() {
 }
 
 void SendNotif() {
-  if (LMIC.opmode & OP_TXRXPEND) return;
+  if (LMIC.opmode & OP_TXRXPEND) {
+    #ifdef DEBUG
+    Serial.println(F("LoRa: TX en cours"));
+    #endif
+    return;
+  }
 
   unsigned char mydata[3];
   mydata[0] = 0x01;
@@ -121,11 +131,22 @@ void SendNotif() {
 
   LMIC_setTxData2(1, mydata, sizeof(mydata), 0);
 
+  #ifdef DEBUG
+  Serial.println(F("LoRa: envoi..."));
+  #endif
+
   loraTxDone = false;
   unsigned long debut = millis();
   while (!loraTxDone && millis() - debut < 10000) {
     os_runloop_once();
   }
+
+  #ifdef DEBUG
+  if (loraTxDone)
+    Serial.println(F("LoRa: OK"));
+  else
+    Serial.println(F("LoRa: timeout"));
+  #endif
 }
 
 void setEtat(int nouvelEtat) {
@@ -135,14 +156,23 @@ void setEtat(int nouvelEtat) {
       digitalWrite(BUZZER_PIN, LOW);
       digitalWrite(LED_PIN, HIGH);
       resetDetection();
+      #ifdef DEBUG
+      Serial.println(F("-> PASSIF"));
+      #endif
       break;
     case ACTIF:
       digitalWrite(BUZZER_PIN, LOW);
       digitalWrite(LED_PIN, LOW);
       resetDetection();
+      #ifdef DEBUG
+      Serial.println(F("-> ACTIF"));
+      #endif
       break;
     case ALERTE:
       digitalWrite(BUZZER_PIN, HIGH);
+      #ifdef DEBUG
+      Serial.println(F("-> ALERTE !"));
+      #endif
       SendNotif();
       break;
   }
@@ -161,8 +191,6 @@ bool boutonVientDEtreAppuye() {
   return false;
 }
 
-// Utilise la distance Manhattan (|X|+|Y|+|Z|) au lieu de sqrt
-// Evite la librairie math et les floats → gain ~1KB
 bool volDetecte(int32_t magnitude) {
   int32_t diff = abs(magnitude - prevMagnitude);
   prevMagnitude = magnitude;
@@ -171,6 +199,10 @@ bool volDetecte(int32_t magnitude) {
     if (!etaitEnMouvement && echanCalme >= PAUSE_SEUIL) {
       incrementMvt += INCR_PENALITE;
       if (incrementMvt > INCREMENT_MAX) incrementMvt = INCREMENT_MAX;
+      #ifdef DEBUG
+      Serial.print(F("Reprise -> incr="));
+      Serial.println(incrementMvt);
+      #endif
     }
     compteur += incrementMvt;
     if (compteur > COMPTEUR_MAX) compteur = COMPTEUR_MAX;
@@ -184,11 +216,29 @@ bool volDetecte(int32_t magnitude) {
     if (compteur < 0) compteur = 0;
     etaitEnMouvement = false;
   }
+
+  #ifdef DEBUG
+  Serial.print(F("diff="));  Serial.print(diff);
+  Serial.print(F(" cpt="));  Serial.print(compteur);
+  Serial.print(F("/"));      Serial.print(SEUIL_ALARME);
+  Serial.print(F(" incr=")); Serial.print(incrementMvt);
+  Serial.print(F(" -> "));
+  Serial.println(diff > SEUIL_DIFF ? F("MVT") : F("calme"));
+  #endif
+
   return (compteur >= SEUIL_ALARME);
 }
 
+// ─────────────────────────────────────────────
+//  SETUP
+// ─────────────────────────────────────────────
 void setup() {
-  // Alimente le bus I2C sur UCA21 via D4
+  #ifdef DEBUG
+  Serial.begin(115200);
+  delay(1000);
+  Serial.println(F("Starting..."));
+  #endif
+
   pinMode(I2C_PWR_PIN, OUTPUT);
   digitalWrite(I2C_PWR_PIN, HIGH);
   delay(300);
@@ -200,7 +250,16 @@ void setup() {
   digitalWrite(LED_PIN, LOW);
 
   Wire.begin();
-  myIMU.begin(sampleRate, accelRange);
+
+  if (myIMU.begin(sampleRate, accelRange) != 0) {
+    #ifdef DEBUG
+    Serial.println(F("IMU: erreur init"));
+    #endif
+  } else {
+    #ifdef DEBUG
+    Serial.println(F("IMU: OK"));
+    #endif
+  }
 
   os_init();
   LMIC_reset();
@@ -220,15 +279,25 @@ void setup() {
   LMIC.dn2Dr = DR_SF9;
   LMIC_setDrTxpow(DR_SF7, 14);
 
+  #ifdef DEBUG
+  Serial.println(F("LoRa: pret"));
+  Serial.println(F("Ready."));
+  #endif
+
   setEtat(PASSIF);
 }
 
-
+// ─────────────────────────────────────────────
+//  LOOP
+// ─────────────────────────────────────────────
 void loop() {
 
   os_runloop_once();
 
   if (boutonVientDEtreAppuye()) {
+    #ifdef DEBUG
+    Serial.println(F("Bouton appuye"));
+    #endif
     switch (etatCourant) {
       case PASSIF: setEtat(ACTIF);  break;
       case ACTIF:  setEtat(PASSIF); break;
@@ -249,7 +318,6 @@ void loop() {
       myIMU.readRegisterInt16(&Z, KXTJ3_ZOUT_L);
       myIMU.standby(true);
 
-      // Distance Manhattan — pas de float ni de sqrt
       int32_t magnitude = (int32_t)abs(X) + abs(Y) + abs(Z);
 
       if (volDetecte(magnitude)) setEtat(ALERTE);
