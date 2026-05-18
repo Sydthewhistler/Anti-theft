@@ -3,7 +3,7 @@
  * Basé sur le code de Fabien Ferrero (Aug, 2021)
  ******************************************************************************/
 
-#define DEBUG
+//#define DEBUG
 
 #include <FastLED.h>
 #include <lmic.h>
@@ -13,23 +13,22 @@
 #include "Wire.h"
 
 #define LOW_POWER
-#define KXTJ3_DEBUG Serial
+// KXTJ3_DEBUG supprimé → économise beaucoup de flash
 
 float   sampleRate = 6.25;
 uint8_t accelRange = 2;
 KXTJ3 myIMU(0x0E);
 
-#define DATA_PIN          4
-#define LED_TYPE          WS2811
-#define COLOR_ORDER       GRB
-#define NUM_LEDS          21
+#define DATA_PIN    4
+#define LED_TYPE    WS2811
+#define COLOR_ORDER GRB
+#define NUM_LEDS    21
+#define BRIGHTNESS  16
 CRGB leds[NUM_LEDS];
-#define BRIGHTNESS        16
-#define FRAMES_PER_SECOND 120
-uint8_t gHue = 0;
+// gHue et FRAMES_PER_SECOND supprimés — jamais utilisés
 
-#define BUZZER_PIN        9
-#define BUTTON_PIN        2
+#define BUZZER_PIN  9
+#define BUTTON_PIN  2
 
 // ─────────────────────────────────────────────
 //  LORA — CLÉS ABP
@@ -110,7 +109,7 @@ void SendNotif() {
   LMIC_setTxData2(1, mydata, sizeof(mydata), 0);
 
   #ifdef DEBUG
-  Serial.println(F("LoRa: envoi alerte..."));
+  Serial.println(F("LoRa: envoi..."));
   #endif
 
   loraTxDone = false;
@@ -120,15 +119,12 @@ void SendNotif() {
   }
 
   #ifdef DEBUG
-  if (loraTxDone)
-    Serial.println(F("LoRa: OK"));
-  else
-    Serial.println(F("LoRa: timeout"));
+  Serial.println(loraTxDone ? F("LoRa: OK") : F("LoRa: timeout"));
   #endif
 }
 
 // ─────────────────────────────────────────────
-//  FONCTION BOUTON — INCHANGÉE
+//  FONCTION BOUTON
 // ─────────────────────────────────────────────
 bool boutonVientDEtreAppuye() {
   bool etat = digitalRead(BUTTON_PIN);
@@ -144,36 +140,32 @@ bool boutonVientDEtreAppuye() {
 }
 
 void setup() {
+  #ifdef DEBUG
   Serial.begin(115200);
   delay(1000);
-  Serial.println("Starting...");
+  Serial.println(F("Starting..."));
+  #endif
 
-  // Buzzer — INCHANGÉ
   pinMode(BUZZER_PIN, OUTPUT);
   digitalWrite(BUZZER_PIN, LOW);
-
-  // Bouton — INCHANGÉ
   pinMode(BUTTON_PIN, INPUT_PULLUP);
 
-  // FastLED — INCHANGÉ
   FastLED.addLeds<LED_TYPE, DATA_PIN, COLOR_ORDER>(leds, NUM_LEDS)
          .setCorrection(TypicalLEDStrip);
   FastLED.setBrightness(BRIGHTNESS);
 
-  // IMU — INCHANGÉ
-  if (myIMU.begin(sampleRate, accelRange) != 0)
-    Serial.println("Failed to initialize IMU.");
-  else
-    Serial.println("IMU initialized.");
+  if (myIMU.begin(sampleRate, accelRange) != 0) {
+    #ifdef DEBUG
+    Serial.println(F("IMU: erreur"));
+    #endif
+  } else {
+    #ifdef DEBUG
+    Serial.println(F("IMU: OK"));
+    #endif
+  }
+  // intConf supprimé — bloque le setup
+  // WHO_AM_I supprimé — inutile en prod
 
-  myIMU.intConf(123, 1, 10, HIGH);
-
-  uint8_t readData = 0;
-  myIMU.readRegister(&readData, KXTJ3_WHO_AM_I);
-  Serial.print("Who am I? 0x");
-  Serial.println(readData, HEX);
-
-  // ── Init LoRa ──
   os_init();
   LMIC_reset();
   LMIC_setClockError(MAX_CLOCK_ERROR * 2 / 100);
@@ -192,17 +184,15 @@ void setup() {
   LMIC.dn2Dr = DR_SF9;
   LMIC_setDrTxpow(DR_SF7, 14);
 
-  Serial.println("LoRa ready.");
-  Serial.println("Systeme ETEINT. Appuie sur BT0 pour armer.");
+  #ifdef DEBUG
+  Serial.println(F("Ready. BT0 pour armer."));
+  #endif
 }
 
 void loop() {
 
   os_runloop_once();
 
-  // ─────────────────────────────────────────
-  //  GESTION BOUTON — INCHANGÉE
-  // ─────────────────────────────────────────
   static float prevMagnitude    = 1.0;
   static int   compteur         = 0;
   static bool  alarme           = false;
@@ -219,7 +209,9 @@ void loop() {
       etaitEnMouvement = false;
       prevMagnitude    = 1.0;
       digitalWrite(BUZZER_PIN, LOW);
-      Serial.println("Alarme reset. Systeme reste ARME.");
+      #ifdef DEBUG
+      Serial.println(F("Alarme reset. Reste ARME."));
+      #endif
     } else if (systemeActif) {
       systemeActif     = false;
       compteur         = 0;
@@ -228,16 +220,17 @@ void loop() {
       etaitEnMouvement = false;
       prevMagnitude    = 1.0;
       digitalWrite(BUZZER_PIN, LOW);
-      Serial.println("Systeme ETEINT.");
+      #ifdef DEBUG
+      Serial.println(F("Systeme ETEINT."));
+      #endif
     } else {
       systemeActif = true;
-      Serial.println("Systeme ARME.");
+      #ifdef DEBUG
+      Serial.println(F("Systeme ARME."));
+      #endif
     }
   }
 
-  // ─────────────────────────────────────────
-  //  DÉTECTION — INCHANGÉE
-  // ─────────────────────────────────────────
   if (!systemeActif) {
     delay(50);
     return;
@@ -267,7 +260,7 @@ void loop() {
       if (incrementMvt > INCREMENT_MAX)
         incrementMvt = INCREMENT_MAX;
       #ifdef DEBUG
-      Serial.print("  Reprise -> INCREMENT = ");
+      Serial.print(F("Reprise -> incr="));
       Serial.println(incrementMvt);
       #endif
     }
@@ -277,44 +270,43 @@ void loop() {
     etaitEnMouvement = true;
   } else {
     echanCalme++;
-    if (echanCalme >= CALME_RESET) {
-      if (incrementMvt != INCREMENT_BASE) {
-        incrementMvt = INCREMENT_BASE;
-        #ifdef DEBUG
-        Serial.println("  Calme prolonge -> INCREMENT reset");
-        #endif
-      }
+    if (echanCalme >= CALME_RESET && incrementMvt != INCREMENT_BASE) {
+      incrementMvt = INCREMENT_BASE;
+      #ifdef DEBUG
+      Serial.println(F("Calme -> incr reset"));
+      #endif
     }
     compteur -= DECREMENT_CALME;
     if (compteur < 0) compteur = 0;
     etaitEnMouvement = false;
   }
 
-  // ── Décision alarme ──
   if (!alarme && compteur >= SEUIL_ALARME) {
     alarme = true;
     digitalWrite(BUZZER_PIN, HIGH);
-    Serial.println("VOL DETECTE ! Buzzer ON");
+    #ifdef DEBUG
+    Serial.println(F("VOL DETECTE !"));
+    #endif
     SendNotif();
   }
 
   if (alarme && compteur == 0) {
     alarme = false;
     digitalWrite(BUZZER_PIN, LOW);
-    Serial.println("Retour au calme. Buzzer OFF");
+    #ifdef DEBUG
+    Serial.println(F("Retour au calme."));
+    #endif
   }
 
   #ifdef DEBUG
-  Serial.print("diff=");    Serial.print(diff, 2);
-  Serial.print("  cpt=");   Serial.print(compteur);
-  Serial.print("/");        Serial.print(SEUIL_ALARME);
-  Serial.print("  incr=");  Serial.print(incrementMvt);
-  Serial.print("  calme="); Serial.print(echanCalme);
-  Serial.print("  buzz=");  Serial.print(alarme ? "ON" : "OFF");
-  Serial.print("  -> ");
-  if      (alarme)            Serial.println("ALARME");
-  else if (diff > SEUIL_DIFF) Serial.println("mouvement...");
-  else                        Serial.println("calme");
+  Serial.print(F("diff=")); Serial.print(diff, 2);
+  Serial.print(F(" cpt=")); Serial.print(compteur);
+  Serial.print(F("/"));     Serial.print(SEUIL_ALARME);
+  Serial.print(F(" inc=")); Serial.print(incrementMvt);
+  Serial.print(F(" -> "));
+  if      (alarme)            Serial.println(F("ALARME"));
+  else if (diff > SEUIL_DIFF) Serial.println(F("mvt..."));
+  else                        Serial.println(F("calme"));
   #endif
 
   myIMU.standby(true);
