@@ -13,7 +13,6 @@
 #include "Wire.h"
 
 #define LOW_POWER
-// KXTJ3_DEBUG supprimé → économise beaucoup de flash
 
 float   sampleRate = 6.25;
 uint8_t accelRange = 2;
@@ -25,7 +24,6 @@ KXTJ3 myIMU(0x0E);
 #define NUM_LEDS    21
 #define BRIGHTNESS  16
 CRGB leds[NUM_LEDS];
-// gHue et FRAMES_PER_SECOND supprimés — jamais utilisés
 
 #define BUZZER_PIN  9
 #define BUTTON_PIN  2
@@ -62,7 +60,11 @@ static bool loraTxDone = false;
 // ─────────────────────────────────────────────
 //  PARAMÈTRES DE DÉTECTION
 // ─────────────────────────────────────────────
-#define SEUIL_DIFF      1.5
+// Valeurs brutes int16 — 1g ≈ 1024 unités
+// Distance Manhattan |X|+|Y|+|Z| — pas de sqrt ni de float
+// SEUIL_DIFF = 1.5g → 1.5 * 1024 * 3 axes ≈ 4608
+// (ajuste si trop/pas assez sensible)
+#define SEUIL_DIFF      4608
 #define INCREMENT_BASE  3
 #define INCREMENT_MAX   15
 #define INCR_PENALITE   3
@@ -163,8 +165,6 @@ void setup() {
     Serial.println(F("IMU: OK"));
     #endif
   }
-  // intConf supprimé — bloque le setup
-  // WHO_AM_I supprimé — inutile en prod
 
   os_init();
   LMIC_reset();
@@ -193,12 +193,13 @@ void loop() {
 
   os_runloop_once();
 
-  static float prevMagnitude    = 1.0;
-  static int   compteur         = 0;
-  static bool  alarme           = false;
-  static int   incrementMvt     = INCREMENT_BASE;
-  static int   echanCalme       = 0;
-  static bool  etaitEnMouvement = false;
+  // Variables entières — plus de float ni de sqrt
+  static int32_t prevMagnitude    = 0;
+  static int     compteur         = 0;
+  static bool    alarme           = false;
+  static int     incrementMvt     = INCREMENT_BASE;
+  static int     echanCalme       = 0;
+  static bool    etaitEnMouvement = false;
 
   if (boutonVientDEtreAppuye()) {
     if (alarme) {
@@ -207,7 +208,7 @@ void loop() {
       incrementMvt     = INCREMENT_BASE;
       echanCalme       = 0;
       etaitEnMouvement = false;
-      prevMagnitude    = 1.0;
+      prevMagnitude    = 0;
       digitalWrite(BUZZER_PIN, LOW);
       #ifdef DEBUG
       Serial.println(F("Alarme reset. Reste ARME."));
@@ -218,7 +219,7 @@ void loop() {
       incrementMvt     = INCREMENT_BASE;
       echanCalme       = 0;
       etaitEnMouvement = false;
-      prevMagnitude    = 1.0;
+      prevMagnitude    = 0;
       digitalWrite(BUZZER_PIN, LOW);
       #ifdef DEBUG
       Serial.println(F("Systeme ETEINT."));
@@ -238,21 +239,15 @@ void loop() {
 
   myIMU.standby(false);
 
-  int16_t dataHighresX = 0;
-  int16_t dataHighresY = 0;
-  int16_t dataHighresZ = 0;
+  int16_t X = 0, Y = 0, Z = 0;
+  myIMU.readRegisterInt16(&X, KXTJ3_XOUT_L);
+  myIMU.readRegisterInt16(&Y, KXTJ3_YOUT_L);
+  myIMU.readRegisterInt16(&Z, KXTJ3_ZOUT_L);
 
-  myIMU.readRegisterInt16(&dataHighresX, KXTJ3_XOUT_L);
-  myIMU.readRegisterInt16(&dataHighresY, KXTJ3_YOUT_L);
-  myIMU.readRegisterInt16(&dataHighresZ, KXTJ3_ZOUT_L);
-
-  float x = dataHighresX / 1024.0;
-  float y = dataHighresY / 1024.0;
-  float z = dataHighresZ / 1024.0;
-
-  float magnitude = sqrt(x * x + y * y + z * z);
-  float diff = abs(magnitude - prevMagnitude);
-  prevMagnitude = magnitude;
+  // Distance Manhattan — pas de float ni de sqrt
+  int32_t magnitude = (int32_t)abs(X) + abs(Y) + abs(Z);
+  int32_t diff      = abs(magnitude - prevMagnitude);
+  prevMagnitude     = magnitude;
 
   if (diff > SEUIL_DIFF) {
     if (!etaitEnMouvement && echanCalme >= PAUSE_SEUIL) {
@@ -299,7 +294,7 @@ void loop() {
   }
 
   #ifdef DEBUG
-  Serial.print(F("diff=")); Serial.print(diff, 2);
+  Serial.print(F("diff=")); Serial.print(diff);
   Serial.print(F(" cpt=")); Serial.print(compteur);
   Serial.print(F("/"));     Serial.print(SEUIL_ALARME);
   Serial.print(F(" inc=")); Serial.print(incrementMvt);
