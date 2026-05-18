@@ -1,11 +1,14 @@
 /******************************************************************************
- * Détection de vol — UCA21
+ * Antivol IoT — UCA21
  * Basé sur le code de Fabien Ferrero (Aug, 2021)
  ******************************************************************************/
 
 #define DEBUG
 
 #include <FastLED.h>
+#include <lmic.h>
+#include <hal/hal.h>
+#include <SPI.h>
 #include "kxtj3-1057.h"
 #include "Wire.h"
 
@@ -25,8 +28,37 @@ CRGB leds[NUM_LEDS];
 #define FRAMES_PER_SECOND 120
 uint8_t gHue = 0;
 
-#define BUZZER_PIN        8   // buzzer externe sur D8
-#define BUTTON_PIN        2   // BT0 — pas de pull-up hardware → INPUT_PULLUP software
+#define BUZZER_PIN        9
+#define BUTTON_PIN        2
+
+// ─────────────────────────────────────────────
+//  LORA — CLÉS ABP
+// ─────────────────────────────────────────────
+static const u4_t DEVADDR = 0x260B9C2F;
+
+static const PROGMEM u1_t NWKSKEY[16] = {
+  0x84, 0x86, 0xC7, 0x16, 0x7A, 0x66, 0x6D, 0x95,
+  0x3B, 0x8A, 0xE5, 0x66, 0x16, 0x63, 0xC9, 0xF4
+};
+
+static const u1_t PROGMEM APPSKEY[16] = {
+  0x01, 0xAB, 0xC5, 0x9D, 0x2E, 0xE5, 0x47, 0x2F,
+  0xE6, 0x83, 0xC8, 0x0D, 0x54, 0x54, 0xA5, 0x39
+};
+
+void os_getArtEui(u1_t* buf) {}
+void os_getDevEui(u1_t* buf) {}
+void os_getDevKey(u1_t* buf) {}
+
+const lmic_pinmap lmic_pins = {
+  .nss  = 10,
+  .rxtx = LMIC_UNUSED_PIN,
+  .rst  = 8,
+  .dio  = {6, 6, 6},
+};
+
+static osjob_t sendjob;
+static bool loraTxDone = false;
 
 // ─────────────────────────────────────────────
 //  PARAMÈTRES DE DÉTECTION
@@ -44,16 +76,64 @@ uint8_t gHue = 0;
 // ─────────────────────────────────────────────
 //  VARIABLES BOUTON
 // ─────────────────────────────────────────────
-bool          dernierEtatBouton = HIGH;
-bool          systemeActif      = false; // false = éteint, true = armé
+bool dernierEtatBouton = HIGH;
+bool systemeActif      = false;
 
 // ─────────────────────────────────────────────
-//  FONCTION BOUTON
+//  LORA — ÉVÉNEMENTS
+// ─────────────────────────────────────────────
+void onEvent(ev_t ev) {
+  if (ev == EV_TXCOMPLETE) {
+    #ifdef DEBUG
+    Serial.println(F("LoRa: TX complete"));
+    #endif
+    loraTxDone = true;
+  }
+}
+
+// ─────────────────────────────────────────────
+//  LORA — ENVOI
+// ─────────────────────────────────────────────
+void SendNotif() {
+  if (LMIC.opmode & OP_TXRXPEND) {
+    #ifdef DEBUG
+    Serial.println(F("LoRa: TX deja en cours"));
+    #endif
+    return;
+  }
+
+  unsigned char mydata[3];
+  mydata[0] = 0x01;
+  mydata[1] = 0x00;
+  mydata[2] = 0x01;
+
+  LMIC_setTxData2(1, mydata, sizeof(mydata), 0);
+
+  #ifdef DEBUG
+  Serial.println(F("LoRa: envoi alerte..."));
+  #endif
+
+  loraTxDone = false;
+  unsigned long debut = millis();
+  while (!loraTxDone && millis() - debut < 10000) {
+    os_runloop_once();
+  }
+
+  #ifdef DEBUG
+  if (loraTxDone)
+    Serial.println(F("LoRa: OK"));
+  else
+    Serial.println(F("LoRa: timeout"));
+  #endif
+}
+
+// ─────────────────────────────────────────────
+//  FONCTION BOUTON — INCHANGÉE
 // ─────────────────────────────────────────────
 bool boutonVientDEtreAppuye() {
   bool etat = digitalRead(BUTTON_PIN);
   if (dernierEtatBouton == HIGH && etat == LOW) {
-    delay(50); // debounce
+    delay(50);
     if (digitalRead(BUTTON_PIN) == LOW) {
       dernierEtatBouton = LOW;
       return true;
@@ -68,18 +148,19 @@ void setup() {
   delay(1000);
   Serial.println("Starting...");
 
-  // Buzzer
+  // Buzzer — INCHANGÉ
   pinMode(BUZZER_PIN, OUTPUT);
   digitalWrite(BUZZER_PIN, LOW);
 
-  // Bouton — INPUT_PULLUP car pas de résistance hardware sur BT0
+  // Bouton — INCHANGÉ
   pinMode(BUTTON_PIN, INPUT_PULLUP);
 
-  // Init FastLED — nécessaire pour alimenter le bus I2C sur la UCA21
+  // FastLED — INCHANGÉ
   FastLED.addLeds<LED_TYPE, DATA_PIN, COLOR_ORDER>(leds, NUM_LEDS)
          .setCorrection(TypicalLEDStrip);
   FastLED.setBrightness(BRIGHTNESS);
 
+  // IMU — INCHANGÉ
   if (myIMU.begin(sampleRate, accelRange) != 0)
     Serial.println("Failed to initialize IMU.");
   else
@@ -92,15 +173,36 @@ void setup() {
   Serial.print("Who am I? 0x");
   Serial.println(readData, HEX);
 
+  // ── Init LoRa ──
+  os_init();
+  LMIC_reset();
+  LMIC_setClockError(MAX_CLOCK_ERROR * 2 / 100);
+
+  uint8_t appskey[sizeof(APPSKEY)];
+  uint8_t nwkskey[sizeof(NWKSKEY)];
+  memcpy_P(appskey, APPSKEY, sizeof(APPSKEY));
+  memcpy_P(nwkskey, NWKSKEY, sizeof(NWKSKEY));
+  LMIC_setSession(0x1, DEVADDR, nwkskey, appskey);
+
+  LMIC_setupChannel(0, 868100000, DR_RANGE_MAP(DR_SF12, DR_SF7),  BAND_CENTI);
+  LMIC_setupChannel(1, 868300000, DR_RANGE_MAP(DR_SF12, DR_SF7B), BAND_CENTI);
+  LMIC_setupChannel(2, 868500000, DR_RANGE_MAP(DR_SF12, DR_SF7),  BAND_CENTI);
+
+  LMIC_setLinkCheckMode(0);
+  LMIC.dn2Dr = DR_SF9;
+  LMIC_setDrTxpow(DR_SF7, 14);
+
+  Serial.println("LoRa ready.");
   Serial.println("Systeme ETEINT. Appuie sur BT0 pour armer.");
 }
 
 void loop() {
 
+  os_runloop_once();
+
   // ─────────────────────────────────────────
-  //  GESTION BOUTON
+  //  GESTION BOUTON — INCHANGÉE
   // ─────────────────────────────────────────
-  // Variables statiques partagées avec la détection
   static float prevMagnitude    = 1.0;
   static int   compteur         = 0;
   static bool  alarme           = false;
@@ -109,10 +211,8 @@ void loop() {
   static bool  etaitEnMouvement = false;
 
   if (boutonVientDEtreAppuye()) {
-
     if (alarme) {
-      // Alarme active → reset alarme, reste armé
-      alarme = false;
+      alarme           = false;
       compteur         = 0;
       incrementMvt     = INCREMENT_BASE;
       echanCalme       = 0;
@@ -120,10 +220,8 @@ void loop() {
       prevMagnitude    = 1.0;
       digitalWrite(BUZZER_PIN, LOW);
       Serial.println("Alarme reset. Systeme reste ARME.");
-
     } else if (systemeActif) {
-      // Armé sans alarme → éteindre
-      systemeActif = false;
+      systemeActif     = false;
       compteur         = 0;
       incrementMvt     = INCREMENT_BASE;
       echanCalme       = 0;
@@ -131,23 +229,20 @@ void loop() {
       prevMagnitude    = 1.0;
       digitalWrite(BUZZER_PIN, LOW);
       Serial.println("Systeme ETEINT.");
-
     } else {
-      // Éteint → armer
       systemeActif = true;
       Serial.println("Systeme ARME.");
     }
   }
 
   // ─────────────────────────────────────────
-  //  DÉTECTION — uniquement si système armé
+  //  DÉTECTION — INCHANGÉE
   // ─────────────────────────────────────────
   if (!systemeActif) {
-    delay(50); // petite pause pour ne pas saturer le CPU à l'arrêt
+    delay(50);
     return;
   }
 
-  // Structure accéléromètre inchangée
   myIMU.standby(false);
 
   int16_t dataHighresX = 0;
@@ -180,7 +275,6 @@ void loop() {
     if (compteur > COMPTEUR_MAX) compteur = COMPTEUR_MAX;
     echanCalme       = 0;
     etaitEnMouvement = true;
-
   } else {
     echanCalme++;
     if (echanCalme >= CALME_RESET) {
@@ -201,6 +295,7 @@ void loop() {
     alarme = true;
     digitalWrite(BUZZER_PIN, HIGH);
     Serial.println("VOL DETECTE ! Buzzer ON");
+    SendNotif();
   }
 
   if (alarme && compteur == 0) {
