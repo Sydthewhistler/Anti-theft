@@ -20,8 +20,9 @@ void os_getArtEui(u1_t* buf) {}
 void os_getDevEui(u1_t* buf) {}
 void os_getDevKey(u1_t* buf) {}
 
-static uint8_t mydata[] = "ALARME";
+static uint8_t mydata[] = "Hello, world!";
 static osjob_t sendjob;
+
 const unsigned TX_INTERVAL = 30;
 
 const lmic_pinmap lmic_pins = {
@@ -33,19 +34,40 @@ const lmic_pinmap lmic_pins = {
 
 void onEvent(ev_t ev) {
   switch (ev) {
+    case EV_SCAN_TIMEOUT:    Serial.println(F("EV_SCAN_TIMEOUT"));    break;
+    case EV_BEACON_FOUND:    Serial.println(F("EV_BEACON_FOUND"));    break;
+    case EV_BEACON_MISSED:   Serial.println(F("EV_BEACON_MISSED"));   break;
+    case EV_BEACON_TRACKED:  Serial.println(F("EV_BEACON_TRACKED"));  break;
+    case EV_JOINING:         Serial.println(F("EV_JOINING"));         break;
+    case EV_JOINED:          Serial.println(F("EV_JOINED"));          break;
+    case EV_RFU1:            Serial.println(F("EV_RFU1"));            break;
+    case EV_JOIN_FAILED:     Serial.println(F("EV_JOIN_FAILED"));     break;
+    case EV_REJOIN_FAILED:   Serial.println(F("EV_REJOIN_FAILED"));   break;
+    case EV_LOST_TSYNC:      Serial.println(F("EV_LOST_TSYNC"));      break;
+    case EV_RESET:           Serial.println(F("EV_RESET"));           break;
+    case EV_RXCOMPLETE:      Serial.println(F("EV_RXCOMPLETE"));      break;
+    case EV_LINK_DEAD:       Serial.println(F("EV_LINK_DEAD"));       break;
+    case EV_LINK_ALIVE:      Serial.println(F("EV_LINK_ALIVE"));      break;
     case EV_TXCOMPLETE:
-      Serial.println(F("TX complete !"));
+      Serial.println(F("EV_TXCOMPLETE"));
+      if (LMIC.txrxFlags & TXRX_ACK)
+        Serial.println(F("Received ack"));
+      if (LMIC.dataLen) {
+        Serial.print(F("Received "));
+        Serial.print(LMIC.dataLen);
+        Serial.println(F(" bytes of payload"));
+      }
       os_setTimedCallback(&sendjob, os_getTime() + sec2osticks(TX_INTERVAL), do_send);
       break;
     default:
-      Serial.println(F("Event inconnu"));
+      Serial.println(F("Unknown event"));
       break;
   }
 }
 
 void do_send(osjob_t* j) {
   if (LMIC.opmode & OP_TXRXPEND) {
-    Serial.println(F("TX en cours..."));
+    Serial.println(F("OP_TXRXPEND, not sending"));
   } else {
     LMIC_setTxData2(1, mydata, sizeof(mydata) - 1, 0);
     Serial.println(F("Packet queued"));
@@ -54,8 +76,7 @@ void do_send(osjob_t* j) {
 
 void setup() {
   Serial.begin(115200);
-  delay(1000);
-  Serial.println(F("Starting..."));
+  Serial.println(F("Starting"));
 
   os_init();
   LMIC_reset();
