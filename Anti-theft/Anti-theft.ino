@@ -92,7 +92,7 @@ void setup() {
 
   // Init LoRa
   radio.begin();
-  node.beginABP(devAddr, nwkSKey, appSKey);
+  node.beginABP(devAddr, nwkSKey, nwkSKey, nwkSKey, appSKey);
 }
 
 void loop() {
