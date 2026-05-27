@@ -164,7 +164,7 @@ UCA21 (LoRa 868 MHz)
 
 ### Serial Monitor Output
 
-<img src="Picture/SerialMonitor.png" alt="Serial Monitor" width="500">
+<img src="Picture/SerialMonitor.png" alt="Serial Monitor" width="500" height="700">
 
 *LoRa initialization, LMIC events, arming/disarming, motion detection.*
 
