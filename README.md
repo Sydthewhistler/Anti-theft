@@ -164,19 +164,19 @@ UCA21 (LoRa 868 MHz)
 
 ### Serial Monitor Output
 
-![Serial Monitor](Picture/SerialMonitor.png)
+<img src="Picture/SerialMonitor.png" alt="Serial Monitor" width="500">
 
 *LoRa initialization, LMIC events, arming/disarming, motion detection.*
 
 ### Twilio WhatsApp Logs
 
-![Twilio WhatsApp logs](Picture/Twilio.png)
+<img src="Picture/Twilio.png" alt="Twilio WhatsApp logs" width="500">
 
 *Twilio logs confirming WhatsApp message delivery (status "Read") during tests from Valrose campus — RSSI -79 dBm, SNR 9.8.*
 
 ### Prototype
 
-![Prototype](Picture/prototype.png)
+<img src="Picture/prototype.png" alt="Prototype" width="500">
 
 *Hardware prototype — UCA21 board with KXTJ3-1057 accelerometer, TMB12A05 buzzer and 4x4 keypad.*
 
