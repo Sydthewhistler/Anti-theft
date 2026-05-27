@@ -168,9 +168,9 @@ void resetDetection() {
 // ─────────────────────────────────────────────
 void queueLoRaEvent(uint8_t eventCode) {
   if (LMIC.opmode & OP_TXRXPEND) {
-    pendingLoRa = true;
-    pendingEvent = eventCode;
-    return;
+	pendingLoRa = true;
+	pendingEvent = eventCode;
+	return;
   }
 
   txPayload[0] = eventCode;
@@ -182,16 +182,16 @@ void queueLoRaEvent(uint8_t eventCode) {
 
 void onEvent(ev_t ev) {
   if (ev == EV_TXCOMPLETE) {
-    Serial.println(F("EV_TXCOMPLETE"));
+	Serial.println(F("EV_TXCOMPLETE"));
 
-    if (pendingLoRa) {
-      pendingLoRa = false;
-      queueLoRaEvent(pendingEvent);
-    }
+	if (pendingLoRa) {
+	  pendingLoRa = false;
+	  queueLoRaEvent(pendingEvent);
+	}
 
   } else {
-    Serial.print(F("EV="));
-    Serial.println((unsigned)ev);
+	Serial.print(F("EV="));
+	Serial.println((unsigned)ev);
   }
 }
 
@@ -237,28 +237,28 @@ void declencherAlarme() {
 // ─────────────────────────────────────────────
 void initKeypadPins() {
   for (byte r = 0; r < ROWS; r++) {
-    pinMode(rowPins[r], OUTPUT);
-    digitalWrite(rowPins[r], HIGH);
+	pinMode(rowPins[r], OUTPUT);
+	digitalWrite(rowPins[r], HIGH);
   }
 
   for (byte c = 0; c < COLS; c++) {
-    pinMode(colPins[c], INPUT_PULLUP);
+	pinMode(colPins[c], INPUT_PULLUP);
   }
 }
 
 char scanKeypadRaw() {
   for (byte r = 0; r < ROWS; r++) {
-    digitalWrite(rowPins[r], LOW);
-    delayMicroseconds(5);
+	digitalWrite(rowPins[r], LOW);
+	delayMicroseconds(5);
 
-    for (byte c = 0; c < COLS; c++) {
-      if (digitalRead(colPins[c]) == LOW) {
-        digitalWrite(rowPins[r], HIGH);
-        return keymap[r][c];
-      }
-    }
+	for (byte c = 0; c < COLS; c++) {
+	  if (digitalRead(colPins[c]) == LOW) {
+		digitalWrite(rowPins[r], HIGH);
+		return keymap[r][c];
+	  }
+	}
 
-    digitalWrite(rowPins[r], HIGH);
+	digitalWrite(rowPins[r], HIGH);
   }
 
   return 0;
@@ -268,18 +268,18 @@ char getKeypadKey() {
   char currentKey = scanKeypadRaw();
 
   if (currentKey != lastKey) {
-    lastKey = currentKey;
-    lastKeyChange = millis();
-    keyAlreadySent = false;
+	lastKey = currentKey;
+	lastKeyChange = millis();
+	keyAlreadySent = false;
   }
 
   if (currentKey != 0 && !keyAlreadySent && (millis() - lastKeyChange) > 40) {
-    keyAlreadySent = true;
-    return currentKey;
+	keyAlreadySent = true;
+	return currentKey;
   }
 
   if (currentKey == 0) {
-    keyAlreadySent = false;
+	keyAlreadySent = false;
   }
 
   return 0;
@@ -295,53 +295,53 @@ void lireClavier() {
   // * = armer / désarmer si pas d’alarme
   // * = effacer la saisie si alarme
   if (key == '*') {
-    if (alarme) {
-      saisieIndex = 0;
-      saisie[0] = '\0';
-      Serial.println(F("Saisie effacee"));
-    } else {
-      if (systemeActif) {
-        desarmerSysteme();
-      } else {
-        armerSysteme();
-      }
-    }
-    return;
+	if (alarme) {
+	  saisieIndex = 0;
+	  saisie[0] = '\0';
+	  Serial.println(F("Saisie effacee"));
+	} else {
+	  if (systemeActif) {
+		desarmerSysteme();
+	  } else {
+		armerSysteme();
+	  }
+	}
+	return;
   }
 
   // # = valider le code uniquement pendant l’alarme
   if (key == '#') {
-    if (alarme) {
-      if (strcmp(saisie, CODE_SECRET) == 0) {
-        Serial.println(F("Code OK"));
-        desarmerSysteme();
-      } else {
-        Serial.println(F("Code faux"));
-        queueLoRaEvent(EVT_BAD_CODE);
-      }
+	if (alarme) {
+	  if (strcmp(saisie, CODE_SECRET) == 0) {
+		Serial.println(F("Code OK"));
+		desarmerSysteme();
+	  } else {
+		Serial.println(F("Code faux"));
+		queueLoRaEvent(EVT_BAD_CODE);
+	  }
 
-      saisieIndex = 0;
-      saisie[0] = '\0';
-    }
-    return;
+	  saisieIndex = 0;
+	  saisie[0] = '\0';
+	}
+	return;
   }
 
   // Hors alarme, on ignore les autres touches
   if (!alarme) {
-    return;
+	return;
   }
 
   // En alarme, on ajoute les touches au code
   if (saisieIndex < sizeof(saisie) - 1) {
-    saisie[saisieIndex++] = key;
-    saisie[saisieIndex] = '\0';
+	saisie[saisieIndex++] = key;
+	saisie[saisieIndex] = '\0';
 
-    Serial.print(F("Saisie="));
-    Serial.println(saisie);
+	Serial.print(F("Saisie="));
+	Serial.println(saisie);
   } else {
-    saisieIndex = 0;
-    saisie[0] = '\0';
-    Serial.println(F("Saisie trop longue, effacee"));
+	saisieIndex = 0;
+	saisie[0] = '\0';
+	Serial.println(F("Saisie trop longue, effacee"));
   }
 }
 
@@ -364,49 +364,49 @@ void lireAccelerometre() {
   long magnitude = labs((long)x) + labs((long)y) + labs((long)z);
 
   if (prevMagnitude == 0) {
-    prevMagnitude = magnitude;
-    return;
+	prevMagnitude = magnitude;
+	return;
   }
 
   long diff = labs(magnitude - prevMagnitude);
   prevMagnitude = magnitude;
 
   if (diff > SEUIL_DIFF) {
-    if (!etaitEnMouvement && echanCalme >= PAUSE_SEUIL) {
-      incrementMvt += INCR_PENALITE;
+	if (!etaitEnMouvement && echanCalme >= PAUSE_SEUIL) {
+	  incrementMvt += INCR_PENALITE;
 
-      if (incrementMvt > INCREMENT_MAX) {
-        incrementMvt = INCREMENT_MAX;
-      }
-    }
+	  if (incrementMvt > INCREMENT_MAX) {
+		incrementMvt = INCREMENT_MAX;
+	  }
+	}
 
-    compteur += incrementMvt;
+	compteur += incrementMvt;
 
-    if (compteur > COMPTEUR_MAX) {
-      compteur = COMPTEUR_MAX;
-    }
+	if (compteur > COMPTEUR_MAX) {
+	  compteur = COMPTEUR_MAX;
+	}
 
-    echanCalme = 0;
-    etaitEnMouvement = true;
+	echanCalme = 0;
+	etaitEnMouvement = true;
 
   } else {
-    echanCalme++;
+	echanCalme++;
 
-    if (echanCalme >= CALME_RESET) {
-      incrementMvt = INCREMENT_BASE;
-    }
+	if (echanCalme >= CALME_RESET) {
+	  incrementMvt = INCREMENT_BASE;
+	}
 
-    compteur -= DECREMENT_CALME;
+	compteur -= DECREMENT_CALME;
 
-    if (compteur < 0) {
-      compteur = 0;
-    }
+	if (compteur < 0) {
+	  compteur = 0;
+	}
 
-    etaitEnMouvement = false;
+	etaitEnMouvement = false;
   }
 
   if (!alarme && compteur >= SEUIL_ALARME) {
-    declencherAlarme();
+	declencherAlarme();
   }
 
 #if DEBUG
@@ -434,9 +434,9 @@ void setup() {
   Wire.begin();
 
   if (myIMU.begin(sampleRate, accelRange) != 0) {
-    Serial.println(F("IMU FAIL"));
+	Serial.println(F("IMU FAIL"));
   } else {
-    Serial.println(F("IMU OK"));
+	Serial.println(F("IMU OK"));
   }
 
   myIMU.intConf(123, 1, 10, HIGH);
@@ -497,11 +497,11 @@ void loop() {
   lireClavier();
 
   if (!systemeActif || alarme) {
-    return;
+	return;
   }
 
   if (millis() - lastSensorRead >= SENSOR_INTERVAL) {
-    lastSensorRead = millis();
-    lireAccelerometre();
+	lastSensorRead = millis();
+	lireAccelerometre();
   }
 }
