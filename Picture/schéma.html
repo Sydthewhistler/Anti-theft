@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Schéma antivol UCA21</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #fff; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; font-family: Arial, sans-serif; padding: 20px; }
+  svg { max-width: 800px; width: 100%; }
+</style>
+</head>
+<body>
+<svg viewBox="0 0 800 500" xmlns="http://www.w3.org/2000/svg">
+
+  <rect width="800" height="500" fill="white"/>
+  <text x="400" y="26" text-anchor="middle" fill="#111" font-size="13" font-weight="bold" font-family="Arial">Schéma câblage — Antivol UCA21</text>
+
+  <!-- ══════════════════════════════════════════ -->
+  <!-- CARTE UCA21                               -->
+  <!-- ══════════════════════════════════════════ -->
+  <rect x="30" y="45" width="120" height="400" rx="6" fill="#f0f4ff" stroke="#333" stroke-width="2"/>
+  <text x="90" y="65" text-anchor="middle" fill="#333" font-size="11" font-weight="bold" font-family="Arial">UCA21</text>
+
+  <!-- Broche D2 (buzzer) -->
+  <line x1="150" y1="100" x2="170" y2="100" stroke="#333" stroke-width="2"/>
+  <text x="147" y="104" text-anchor="end" fill="#333" font-size="10" font-family="Arial">D2</text>
+
+  <!-- Broche GND buzzer -->
+  <line x1="150" y1="140" x2="170" y2="140" stroke="#333" stroke-width="2"/>
+  <text x="147" y="144" text-anchor="end" fill="#333" font-size="10" font-family="Arial">GND</text>
+
+  <!-- Broches pavé numérique : R1-R4 (lignes) -->
+  <line x1="150" y1="230" x2="170" y2="230" stroke="#333" stroke-width="2"/>
+  <text x="147" y="234" text-anchor="end" fill="#333" font-size="10" font-family="Arial">A0</text>
+
+  <line x1="150" y1="258" x2="170" y2="258" stroke="#333" stroke-width="2"/>
+  <text x="147" y="262" text-anchor="end" fill="#333" font-size="10" font-family="Arial">A1</text>
+
+  <line x1="150" y1="286" x2="170" y2="286" stroke="#333" stroke-width="2"/>
+  <text x="147" y="290" text-anchor="end" fill="#333" font-size="10" font-family="Arial">A2</text>
+
+  <line x1="150" y1="314" x2="170" y2="314" stroke="#333" stroke-width="2"/>
+  <text x="147" y="318" text-anchor="end" fill="#333" font-size="10" font-family="Arial">A3</text>
+
+  <!-- Broches pavé numérique : C1-C4 (colonnes) -->
+  <line x1="150" y1="355" x2="170" y2="355" stroke="#333" stroke-width="2"/>
+  <text x="147" y="359" text-anchor="end" fill="#333" font-size="10" font-family="Arial">D5</text>
+
+  <line x1="150" y1="378" x2="170" y2="378" stroke="#333" stroke-width="2"/>
+  <text x="147" y="382" text-anchor="end" fill="#333" font-size="10" font-family="Arial">D7</text>
+
+  <line x1="150" y1="401" x2="170" y2="401" stroke="#333" stroke-width="2"/>
+  <text x="147" y="405" text-anchor="end" fill="#333" font-size="10" font-family="Arial">D9</text>
+
+  <line x1="150" y1="424" x2="170" y2="424" stroke="#333" stroke-width="2"/>
+  <text x="147" y="428" text-anchor="end" fill="#333" font-size="10" font-family="Arial">D3</text>
+
+  <!-- ══════════════════════════════════════════ -->
+  <!-- BUZZER                                    -->
+  <!-- ══════════════════════════════════════════ -->
+
+  <!-- fil D2 → buzzer + -->
+  <line x1="170" y1="100" x2="310" y2="100" stroke="#333" stroke-width="2"/>
+  <text x="240" y="92" text-anchor="middle" fill="#333" font-size="9" font-family="Arial">fil rouge (+)</text>
+
+  <!-- rail GND buzzer -->
+  <line x1="170" y1="140" x2="170" y2="172" stroke="#333" stroke-width="1.5" stroke-dasharray="5 3"/>
+  <line x1="170" y1="172" x2="420" y2="172" stroke="#333" stroke-width="2"/>
+  <!-- symbole GND -->
+  <line x1="295" y1="172" x2="295" y2="185" stroke="#333" stroke-width="2"/>
+  <line x1="284" y1="185" x2="306" y2="185" stroke="#333" stroke-width="2"/>
+  <line x1="288" y1="191" x2="302" y2="191" stroke="#333" stroke-width="1.5"/>
+  <line x1="292" y1="197" x2="298" y2="197" stroke="#333" stroke-width="1"/>
+  <text x="295" y="210" text-anchor="middle" fill="#333" font-size="9" font-family="Arial">GND</text>
+
+  <!-- buzzer cercle -->
+  <circle cx="375" cy="118" r="38" fill="none" stroke="#333" stroke-width="2"/>
+  <line x1="358" y1="108" x2="392" y2="108" stroke="#333" stroke-width="2"/>
+  <line x1="358" y1="118" x2="392" y2="118" stroke="#333" stroke-width="2"/>
+  <line x1="358" y1="128" x2="392" y2="128" stroke="#333" stroke-width="2"/>
+  <path d="M400 106 Q411 118 400 130" fill="none" stroke="#333" stroke-width="1.5"/>
+  <path d="M406 100 Q421 118 406 136" fill="none" stroke="#333" stroke-width="1.5"/>
+  <!-- fil + -->
+  <line x1="310" y1="100" x2="310" y2="118" stroke="#333" stroke-width="2"/>
+  <line x1="310" y1="118" x2="337" y2="118" stroke="#333" stroke-width="2"/>
+  <text x="318" y="108" fill="#333" font-size="11" font-weight="bold" font-family="Arial">+</text>
+  <!-- fil − -->
+  <line x1="413" y1="118" x2="420" y2="118" stroke="#333" stroke-width="2"/>
+  <line x1="420" y1="118" x2="420" y2="172" stroke="#333" stroke-width="2"/>
+  <circle cx="420" cy="172" r="4" fill="#333"/>
+  <text x="424" y="108" fill="#333" font-size="11" font-weight="bold" font-family="Arial">−</text>
+  <text x="375" y="165" text-anchor="middle" fill="#333" font-size="10" font-weight="bold" font-family="Arial">BUZZER</text>
+  <text x="375" y="177" text-anchor="middle" fill="#555" font-size="9" font-family="Arial">TMB12A05</text>
+
+  <!-- ══════════════════════════════════════════ -->
+  <!-- PAVÉ NUMÉRIQUE 4x4                        -->
+  <!-- ══════════════════════════════════════════ -->
+  <rect x="530" y="218" width="220" height="240" rx="8" fill="#f9f9f9" stroke="#333" stroke-width="2"/>
+  <text x="640" y="240" text-anchor="middle" fill="#333" font-size="11" font-weight="bold" font-family="Arial">Pavé numérique 4×4</text>
+
+  <!-- rangée 1 -->
+  <rect x="548" y="250" width="34" height="26" rx="3" fill="#eee" stroke="#999" stroke-width="1"/>
+  <text x="565" y="268" text-anchor="middle" fill="#333" font-size="10" font-family="Arial">1</text>
+  <rect x="590" y="250" width="34" height="26" rx="3" fill="#eee" stroke="#999" stroke-width="1"/>
+  <text x="607" y="268" text-anchor="middle" fill="#333" font-size="10" font-family="Arial">2</text>
+  <rect x="632" y="250" width="34" height="26" rx="3" fill="#eee" stroke="#999" stroke-width="1"/>
+  <text x="649" y="268" text-anchor="middle" fill="#333" font-size="10" font-family="Arial">3</text>
+  <rect x="674" y="250" width="34" height="26" rx="3" fill="#eee" stroke="#999" stroke-width="1"/>
+  <text x="691" y="268" text-anchor="middle" fill="#333" font-size="10" font-family="Arial">A</text>
+  <!-- rangée 2 -->
+  <rect x="548" y="284" width="34" height="26" rx="3" fill="#eee" stroke="#999" stroke-width="1"/>
+  <text x="565" y="302" text-anchor="middle" fill="#333" font-size="10" font-family="Arial">4</text>
+  <rect x="590" y="284" width="34" height="26" rx="3" fill="#eee" stroke="#999" stroke-width="1"/>
+  <text x="607" y="302" text-anchor="middle" fill="#333" font-size="10" font-family="Arial">5</text>
+  <rect x="632" y="284" width="34" height="26" rx="3" fill="#eee" stroke="#999" stroke-width="1"/>
+  <text x="649" y="302" text-anchor="middle" fill="#333" font-size="10" font-family="Arial">6</text>
+  <rect x="674" y="284" width="34" height="26" rx="3" fill="#eee" stroke="#999" stroke-width="1"/>
+  <text x="691" y="302" text-anchor="middle" fill="#333" font-size="10" font-family="Arial">B</text>
+  <!-- rangée 3 -->
+  <rect x="548" y="318" width="34" height="26" rx="3" fill="#eee" stroke="#999" stroke-width="1"/>
+  <text x="565" y="336" text-anchor="middle" fill="#333" font-size="10" font-family="Arial">7</text>
+  <rect x="590" y="318" width="34" height="26" rx="3" fill="#eee" stroke="#999" stroke-width="1"/>
+  <text x="607" y="336" text-anchor="middle" fill="#333" font-size="10" font-family="Arial">8</text>
+  <rect x="632" y="318" width="34" height="26" rx="3" fill="#eee" stroke="#999" stroke-width="1"/>
+  <text x="649" y="336" text-anchor="middle" fill="#333" font-size="10" font-family="Arial">9</text>
+  <rect x="674" y="318" width="34" height="26" rx="3" fill="#eee" stroke="#999" stroke-width="1"/>
+  <text x="691" y="336" text-anchor="middle" fill="#333" font-size="10" font-family="Arial">C</text>
+  <!-- rangée 4 -->
+  <rect x="548" y="352" width="34" height="26" rx="3" fill="#eee" stroke="#999" stroke-width="1"/>
+  <text x="565" y="370" text-anchor="middle" fill="#333" font-size="10" font-family="Arial">*</text>
+  <rect x="590" y="352" width="34" height="26" rx="3" fill="#eee" stroke="#999" stroke-width="1"/>
+  <text x="607" y="370" text-anchor="middle" fill="#333" font-size="10" font-family="Arial">0</text>
+  <rect x="632" y="352" width="34" height="26" rx="3" fill="#eee" stroke="#999" stroke-width="1"/>
+  <text x="649" y="370" text-anchor="middle" fill="#333" font-size="10" font-family="Arial">#</text>
+  <rect x="674" y="352" width="34" height="26" rx="3" fill="#eee" stroke="#999" stroke-width="1"/>
+  <text x="691" y="370" text-anchor="middle" fill="#333" font-size="10" font-family="Arial">D</text>
+
+  <!-- Connecteur pavé fils gauche -->
+  <line x1="530" y1="248" x2="540" y2="248" stroke="#333" stroke-width="1.5"/>
+  <text x="528" y="252" text-anchor="end" fill="#333" font-size="9" font-family="Arial">R1</text>
+  <line x1="530" y1="273" x2="540" y2="273" stroke="#333" stroke-width="1.5"/>
+  <text x="528" y="277" text-anchor="end" fill="#333" font-size="9" font-family="Arial">R2</text>
+  <line x1="530" y1="298" x2="540" y2="298" stroke="#333" stroke-width="1.5"/>
+  <text x="528" y="302" text-anchor="end" fill="#333" font-size="9" font-family="Arial">R3</text>
+  <line x1="530" y1="323" x2="540" y2="323" stroke="#333" stroke-width="1.5"/>
+  <text x="528" y="327" text-anchor="end" fill="#333" font-size="9" font-family="Arial">R4</text>
+  <line x1="530" y1="353" x2="540" y2="353" stroke="#333" stroke-width="1.5"/>
+  <text x="528" y="357" text-anchor="end" fill="#333" font-size="9" font-family="Arial">C1</text>
+  <line x1="530" y1="373" x2="540" y2="373" stroke="#333" stroke-width="1.5"/>
+  <text x="528" y="377" text-anchor="end" fill="#333" font-size="9" font-family="Arial">C2</text>
+  <line x1="530" y1="393" x2="540" y2="393" stroke="#333" stroke-width="1.5"/>
+  <text x="528" y="397" text-anchor="end" fill="#333" font-size="9" font-family="Arial">C3</text>
+  <line x1="530" y1="413" x2="540" y2="413" stroke="#333" stroke-width="1.5"/>
+  <text x="528" y="417" text-anchor="end" fill="#333" font-size="9" font-family="Arial">C4</text>
+
+  <!-- FILS carte → pavé -->
+  <!-- Lignes R1-R4 -->
+  <line x1="170" y1="230" x2="530" y2="248" stroke="#333" stroke-width="1.5"/>
+  <line x1="170" y1="258" x2="530" y2="273" stroke="#333" stroke-width="1.5"/>
+  <line x1="170" y1="286" x2="530" y2="298" stroke="#333" stroke-width="1.5"/>
+  <line x1="170" y1="314" x2="530" y2="323" stroke="#333" stroke-width="1.5"/>
+  <!-- Colonnes C1-C4 -->
+  <line x1="170" y1="355" x2="530" y2="353" stroke="#333" stroke-width="1.5"/>
+  <line x1="170" y1="378" x2="530" y2="373" stroke="#333" stroke-width="1.5"/>
+  <line x1="170" y1="401" x2="530" y2="393" stroke="#333" stroke-width="1.5"/>
+  <line x1="170" y1="424" x2="530" y2="413" stroke="#333" stroke-width="1.5"/>
+
+  <!-- labels groupes -->
+  <text x="350" y="218" text-anchor="middle" fill="#555" font-size="9" font-family="Arial">── Lignes ──</text>
+  <text x="350" y="346" text-anchor="middle" fill="#555" font-size="9" font-family="Arial">── Colonnes ──</text>
+
+  <!-- NOTE utilisation -->
+  <rect x="30" y="458" width="740" height="30" rx="5" fill="#f0f4ff" stroke="#aaa" stroke-width="1"/>
+  <text x="400" y="470" text-anchor="middle" fill="#333" font-size="9" font-family="Arial">* = armer / désarmer  |  1234# = désactiver l'alarme  |  * = effacer saisie pendant alarme</text>
+  <text x="400" y="482" text-anchor="middle" fill="#555" font-size="8" font-family="Arial">Buzzer D2 · Lignes A0-A3 · Colonnes D5, D7, D9, D3</text>
+
+</svg>
+</body>
+</html>
